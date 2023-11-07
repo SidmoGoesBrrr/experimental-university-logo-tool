@@ -19,7 +19,7 @@ def search_university_logo(university):
 
         # If not found on .edu domain, try searching on Google Images
         query = f"{university} logo"
-        for j in search(query, num=1, stop=1, pause=2, tbs='isz:l'):
+        for j in search(query, num=1, stop=1, pause=2):
             return j
 
     except Exception as e:
