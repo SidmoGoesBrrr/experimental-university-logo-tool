@@ -40,7 +40,7 @@ if uploaded_file is not None:
             st.write(df)
 
             # Create a temporary directory to store downloaded logos
-            os.makedirs("temp", exist_ok=True)
+            os.makedirs("temp")
 
             logo_urls = {}
             for university in df["University"]:
