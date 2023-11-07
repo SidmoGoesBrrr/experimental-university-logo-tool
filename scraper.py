@@ -116,5 +116,3 @@ if uploaded_file is not None:
 # Log when the app finishes
 logging.info("University Logo Scraper finished")
 
-# Display the log file's location
-st.write(f"Log file: {log_filename}")
