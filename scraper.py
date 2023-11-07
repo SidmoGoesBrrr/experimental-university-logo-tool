@@ -14,7 +14,7 @@ logging.basicConfig(
 # Function to search for university logo
 def search_university_logo(university):
     try:
-        downloader.download(f"{university} logo", limit=1, output_dir='uni_logos', adult_filter_off=True, force_replace=False, timeout=60, verbose=True)
+        downloader.download(f"{university} logo", limit=1,  output_dir='uni_logos', adult_filter_off=True, force_replace=False, timeout=60, verbose=True)
     except Exception as e:
         logging.error(f"Error searching for logo for {university}: {str(e)}")
 
@@ -38,7 +38,7 @@ if uploaded_file is not None:
             logo_urls = {}
             for university in df["University"]:
                 search_university_logo(university)
-                logo_filename = f"{university} logo/logo.jpg"  # Bing Image Downloader stores images in a subdirectory
+                logo_filename = f"uni_logos/{university} logo/image.jpg"  # Updated path to the downloaded image
                 if os.path.exists(logo_filename):
                     logo_urls[university] = logo_filename
 
