@@ -10,7 +10,7 @@ import zipfile
 def search_university_logo(university):
     try:
         query = f"{university} logo site:.edu"  # Search for university logo on .edu domains
-        for j in search(query, stop=1, pause=2):
+        for j in search(query, , num_results=1):
             page = requests.get(j)
             soup = BeautifulSoup(page.content, 'html.parser')
             logo = soup.find("img", {"alt": f"{university} logo"})
