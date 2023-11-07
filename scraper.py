@@ -5,6 +5,14 @@ from bs4 import BeautifulSoup
 from googlesearch import search
 import os
 import zipfile
+import logging
+
+# Configure the logging settings
+logging.basicConfig(
+    filename=log_filename,
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 # Function to search for university logo
 def search_university_logo(university):
@@ -17,12 +25,13 @@ def search_university_logo(university):
             if logo:
                 return logo['src']
 
-        # If not found on .edu domain, try searching on Google Images
+        # If not found on . .edu domain, try searching on Google Images
         query = f"{university} logo"
         for j in search(query, num=1, stop=1, pause=2):
             return j
 
     except Exception as e:
+        logging.error(f"Error searching for logo for {university}: {str(e)}")
         return str(e)
 
 # Streamlit app
@@ -59,10 +68,13 @@ if uploaded_file is not None:
                             with open(os.path.join("temp", f"{university}.png"), "wb") as f:
                                 f.write(logo.content)
                             zipf.write(os.path.join("temp", f"{university}.png"), f"{university}.png")
+                            logging.info(f"Fetched logo for {university}")
                         else:
                             exceptions[university] = f"Failed to fetch logo (Status code {logo.status_code})"
+                            logging.warning(f"Failed to fetch logo for {university}: Status code {logo.status_code}")
                     except Exception as e:
                         exceptions[university] = str(e)
+                        logging.error(f"Error fetching logo for {university}: {str(e)}")
 
             # Display logos and exceptions
             for university, logo_url in logo_urls.items():
@@ -100,4 +112,10 @@ if uploaded_file is not None:
             st.write("CSV file must contain a column named 'University'.")
 
     except pd.errors.EmptyDataError:
-        st.write("Uploaded file is empty or not in CSV format.")
+        st.write("Uploaded file is empty or not in CSV format")
+
+# Log when the app finishes
+logging.info("University Logo Scraper finished")
+
+# Display the log file's location
+st.write(f"Log file: {log_filename}")
