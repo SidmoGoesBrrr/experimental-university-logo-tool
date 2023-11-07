@@ -40,7 +40,7 @@ if uploaded_file is not None:
             st.write(df)
 
             # Create a temporary directory to store downloaded logos
-            os.makedirs("temp")
+            os.makedirs("temp", exist_ok=True)  # Use exist_ok=True to avoid errors if the directory already exists
 
             logo_urls = {}
             for university in df["University"]:
@@ -78,14 +78,26 @@ if uploaded_file is not None:
 
             # Provide download link for the zip file
             st.write("### Download Logos")
-            st.markdown(f"[Download {zip_filename}](temp/{zip_filename})")
+
+            # Generate a download button for the zip file
+            with open(zip_filename, "rb") as fp:
+                st.download_button(
+                    label="Download ZIP",
+                    data=fp,
+                    file_name=zip_filename,
+                    key='download-zip-button',  # Add a key to the button to avoid duplicate buttons
+                    mime="application/octet-stream"
+                )
+
+            # Cleanup temporary directory
+            for file_name in os.listdir("temp"):
+                file_path = os.path.join("temp", file_name)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+            os.rmdir("temp")
 
         else:
             st.write("CSV file must contain a column named 'University'.")
 
     except pd.errors.EmptyDataError:
         st.write("Uploaded file is empty or not in CSV format.")
-
-# Cleanup temporary directory
-os.rmdir("temp")
-
