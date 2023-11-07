@@ -67,7 +67,10 @@ if uploaded_file is not None:
             # Display logos and exceptions
             for university, logo_url in logo_urls.items():
                 st.write(f"Logo for {university}:")
-                st.image(logo_url, use_column_width=True)
+                try:
+                    st.image(logo_url, use_column_width=True)
+                except:
+                    pass
 
             if exceptions:
                 st.write("Exceptions in fetching logos:")
