@@ -4,6 +4,7 @@ import os
 import zipfile
 import logging
 from bing_image_downloader import downloader
+import shutil
 
 # Configure the logging settings
 logging.basicConfig(
@@ -11,12 +12,12 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-# Function to search for university logo
-def search_university_logo(university):
+# Function to search for university logos
+def search_university_logos(university, output_dir):
     try:
-        downloader.download(f"{university} logo", limit=1,  output_dir='uni_logos', adult_filter_off=True, force_replace=False, timeout=60, verbose=True)
+        downloader.download(f"{university} logo", limit=6, output_dir=output_dir, adult_filter_off=True, force_replace=False, timeout=60, verbose=True)
     except Exception as e:
-        logging.error(f"Error searching for logo for {university}: {str(e)}")
+        logging.error(f"Error searching for logos for {university}: {str(e)}")
 
 # Streamlit app
 st.title("University Logo Scraper")
@@ -35,36 +36,31 @@ if uploaded_file is not None:
             # Create a temporary directory to store downloaded logos
             os.makedirs("uni_logos", exist_ok=True)  # Use exist_ok=True to avoid errors if the directory already exists
 
-            logo_urls = {}
-            for university in df["University"]:
-                search_university_logo(university)
-                logo_filename = f"uni_logos/{university} logo/image.jpg"  # Updated path to the downloaded image
-                if os.path.exists(logo_filename):
-                    logo_urls[university] = logo_filename
-
-            # Zip the logos
             zip_filename = "university_logos.zip"
+
+            # Clear the "uni_logos" directory before starting
+            if os.path.exists("uni_logos"):
+                shutil.rmtree("uni_logos")
+
             with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 exceptions = {}
-                for university, logo_filename in logo_urls.items():
-                    try:
-                        zipf.write(logo_filename, f"{university}.jpg")
-                        logging.info(f"Fetched logo for {university}")
-                    except Exception as e:
-                        exceptions[university] = str(e)
-                        logging.error(f"Error fetching logo for {university}: {str(e)}")
+                for university in df["University"]:
+                    university_dir = os.path.join("uni_logos", university)
+                    os.makedirs(university_dir, exist_ok=True)
 
-            # Display logos and exceptions
-            for university, logo_filename in logo_urls.items():
-                st.write(f"Logo for {university}:")
-                try:
-                    st.image(logo_filename, use_column_width=True)
-                except:
-                    pass
+                    search_university_logos(university, output_dir=university_dir)
 
-            if exceptions:
-                st.write("Exceptions in fetching logos:")
-                st.write(exceptions)
+                    for i in range(1, 7):
+                        image_filename = f"{university}/{i}.png"  # Updated path to the downloaded image
+                        if os.path.exists(os.path.join("uni_logos", image_filename)):
+                            zipf.write(os.path.join("uni_logos", image_filename), image_filename)
+                            logging.info(f"Fetched image {i} for {university}")
+                        else:
+                            exceptions[university] = f"Image {i} not found"
+
+            # Display exceptions
+            for university, error_message in exceptions.items():
+                st.write(f"Errors for {university}: {error_message}")
 
             # Provide download link for the zip file
             st.write("### Download Logos")
