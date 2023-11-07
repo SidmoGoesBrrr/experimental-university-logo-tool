@@ -3,6 +3,8 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from googlesearch import search
+import os
+import zipfile
 
 # Function to search for university logo
 def search_university_logo(university):
@@ -21,7 +23,7 @@ def search_university_logo(university):
             return j
 
     except Exception as e:
-        return None
+        return str(e)
 
 # Streamlit app
 st.title("University Logo Scraper")
@@ -37,21 +39,50 @@ if uploaded_file is not None:
             st.write("Universities to fetch logos for:")
             st.write(df)
 
+            # Create a temporary directory to store downloaded logos
+            os.makedirs("temp", exist_ok=True)
+
+            logo_urls = {}
             for university in df["University"]:
                 logo_url = search_university_logo(university)
                 if logo_url:
-                    st.write(f"Logo for {university}:")
-                    st.image(logo_url, use_column_width=True)
-                else:
-                    st.write(f"Logo for {university} not found.")
+                    logo_urls[university] = logo_url
+
+            # Zip the logos
+            zip_filename = "university_logos.zip"
+            with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                exceptions = {}
+                for university, logo_url in logo_urls.items():
+                    try:
+                        logo = requests.get(logo_url)
+                        if logo.status_code == 200:
+                            with open(os.path.join("temp", f"{university}.png"), "wb") as f:
+                                f.write(logo.content)
+                            zipf.write(os.path.join("temp", f"{university}.png"), f"{university}.png")
+                        else:
+                            exceptions[university] = f"Failed to fetch logo (Status code {logo.status_code})"
+                    except Exception as e:
+                        exceptions[university] = str(e)
+
+            # Display logos and exceptions
+            for university, logo_url in logo_urls.items():
+                st.write(f"Logo for {university}:")
+                st.image(logo_url, use_column_width=True)
+
+            if exceptions:
+                st.write("Exceptions in fetching logos:")
+                st.write(exceptions)
+
+            # Provide download link for the zip file
+            st.write("### Download Logos")
+            st.markdown(f"[Download {zip_filename}](temp/{zip_filename})")
+
         else:
             st.write("CSV file must contain a column named 'University'.")
 
     except pd.errors.EmptyDataError:
         st.write("Uploaded file is empty or not in CSV format.")
 
-# Requirements.txt
-st.write("### Requirements.txt")
-with open("requirements.txt", "r") as file:
-    st.code(file.read())
+# Cleanup temporary directory
+os.rmdir("temp")
 
